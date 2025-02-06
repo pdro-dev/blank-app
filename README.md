@@ -2,7 +2,10 @@
 
 # 📌 **Sistema de Registros com Streamlit**  
 
-Este é um sistema web desenvolvido com **Streamlit**, utilizando **SQLite** para armazenamento de dados. O sistema permite **cadastro, consulta, exportação de registros e geração de PDFs**.
+Este é um sistema web desenvolvido com **Streamlit**, utilizando **SQLite** para armazenamento de dados. O sistema permite **cadastro, consulta, exportação de registros e geração de PDFs**.  
+
+### 🎯 **Acesse e teste agora:**  
+🔗 **[Clique aqui para testar o app no Streamlit Cloud](https://blank-app-tux8g62dgib.streamlit.app/)**  
 
 ---
 
@@ -57,7 +60,7 @@ streamlit run streamlit_app.py
 
 ## 📜 **Como Usar**
 ### **🔐 Login**
-- Acesse com **Usuário:** `admin` e **Senha:** `1234` (Pode ser modificado no código) (código modificado para login direto)
+- Acesse com **Usuário:** `admin` e **Senha:** `1234` (Pode ser modificado no código)(código modificado para login direto)
 
 ### **📋 Cadastro de Registros**
 - Preencha os campos **Nome, Email e Descrição**
@@ -107,6 +110,3 @@ Caso tenha dúvidas ou sugestões, entre em contato:
 🔗 **LinkedIn:** [linkedin.com/in/seu-perfil](https://linkedin.com/in/seu-perfil)  
 
 ---
-
-Agora seu projeto tem uma **documentação completa e profissional**! 🚀🔥  
-Se precisar de ajustes ou quiser adicionar mais informações, me avise. 😊
