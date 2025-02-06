@@ -72,10 +72,10 @@ def cadastro_formulario():
         else:
             st.error("❌ Todos os campos são obrigatórios.")
 
-# Página de Visualização de Documento
+# Página de Visualização de Documento com Correção de Cores
 def visualizar_documento():
     st.title("📄 Visualização de Documento")
-    
+
     conn = get_db_connection()
     registros = conn.execute("SELECT * FROM registros").fetchall()
     conn.close()
@@ -89,17 +89,41 @@ def visualizar_documento():
 
     registro = next((r for r in registros if r[0] == selected_id), None)
     if registro:
-        st.markdown(f"""
-        ---
-        ### 📌 Documento Oficial  
-        **Nome:** {registro[1]}  
-        **Email:** {registro[2]}  
-        **Descrição:**  
-        {registro[3]}  
-        ---
-        """)
+        # Criando um layout visualmente estruturado e corrigindo a cor do texto
+        st.markdown(
+            f"""
+            <div style="
+                border: 2px solid #ddd; 
+                border-radius: 10px; 
+                padding: 20px; 
+                background-color: #ffffff;
+                box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+            ">
+                <h2 style="text-align: center; color: #333;">📌 Documento Oficial</h2>
+                <hr>
+                <p><span style="background-color: #4A90E2; color: #fff; padding: 5px 10px; border-radius: 5px;">🆔 ID:</span> {registro[0]}</p>
+                <p><span style="background-color: #4A90E2; color: #fff; padding: 5px 10px; border-radius: 5px;">👤 Nome:</span> {registro[1]}</p>
+                <p><span style="background-color: #4A90E2; color: #fff; padding: 5px 10px; border-radius: 5px;">📧 Email:</span> {registro[2]}</p>
+                <p><span style="background-color: #4A90E2; color: #fff; padding: 5px 10px; border-radius: 5px;">📝 Descrição:</span></p>
+                <div style="
+                    border-left: 5px solid #007BFF; 
+                    padding: 10px;
+                    background-color: #f0f4ff;
+                    font-style: normal;
+                    color: #333;
+                ">
+                    {registro[3]}
+                </div>
+                <hr>
+                <p style="text-align: right; font-size: 12px; color: #888;">📅 Data de emissão: {st.session_state.get('data_atual', 'N/A')}</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
     else:
         st.error("Registro não encontrado.")
+
+
 
 # Layout do Menu Lateral
 if "authenticated" not in st.session_state:
