@@ -1,9 +1,10 @@
 import streamlit as st
 import sqlite3
 import pandas as pd
+import os
+os.system("pip install fpdf")
 from fpdf import FPDF
 import base64
-import os
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 
