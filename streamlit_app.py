@@ -24,7 +24,7 @@ def login_page():
     password = st.text_input("Senha", type="password", key="password")
     
     if st.button("Entrar"):
-        if user == "admin" and password == "1234":
+        if user == "" and password == "":
             st.session_state["authenticated"] = True
             st.success("✅ Login realizado com sucesso!")
             st.rerun()
@@ -36,11 +36,20 @@ def consulta_registros():
     st.title("📋 Consulta de Registros")
     conn = get_db_connection()
     registros = conn.execute("SELECT * FROM registros").fetchall()
-    conn.close()
-
+    
     if registros:
-        st.write("Registros encontrados:")
-        st.table([{"ID": r[0], "Nome": r[1], "Email": r[2], "Descrição": r[3]} for r in registros])
+        for r in registros:
+            with st.expander(f"📌 {r[1]} ({r[2]})"):
+                st.write(f"**Descrição:** {r[3]}")
+                col1, col2 = st.columns([4, 1])
+                with col2:
+                    if st.button("🗑️ Excluir", key=f"delete_{r[0]}"):
+                        conn.execute("DELETE FROM registros WHERE id = ?", (r[0],))
+                        conn.commit()
+                        conn.close()
+                        st.success("✅ Registro excluído com sucesso!")
+                        st.rerun()
+        conn.close()
     else:
         st.info("Nenhum registro encontrado.")
 
