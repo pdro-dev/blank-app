@@ -2,14 +2,10 @@ import streamlit as st
 import sqlite3
 import pandas as pd
 import os
-try:
-    from fpdf import FPDF
-except ModuleNotFoundError:
-    os.system("pip install fpdf")
-    from fpdf import FPDF
 import base64
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
+import textwrap
 
 # Configuração da página
 st.set_page_config(page_title="Sistema de Registros", layout="wide")
@@ -101,37 +97,39 @@ def consulta_registros():
     else:
         st.info("Nenhum registro encontrado.")
 
-# Definir o caminho para a fonte
-FONT_PATH = "DejaVuSans.ttf"
-
-class PDF(FPDF):
-    def header(self):
-        self.set_font("DejaVu", "", 16)  # Fonte adicionada corretamente
-        self.cell(200, 10, "Documento Oficial", ln=True, align="C")
-        self.ln(10)
-
 def gerar_pdf(registro):
     pdf_file = f"documento_{registro[0]}.pdf"
     
     # Criar um PDF usando o ReportLab
     c = canvas.Canvas(pdf_file, pagesize=A4)
     width, height = A4
+    margem_esquerda = 50
+    margem_superior = height - 50
 
-    c.setFont("Helvetica", 16)
-    c.drawString(50, height - 50, "📌 Documento Oficial")
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(margem_esquerda, margem_superior, "📌 Documento Oficial")
 
-    c.setFont("Helvetica", 12)
-    c.drawString(50, height - 100, f"🆔 ID: {registro[0]}")
-    c.drawString(50, height - 120, f"👤 Nome: {registro[1]}")
-    c.drawString(50, height - 140, f"📧 Email: {registro[2]}")
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(margem_esquerda, margem_superior - 40, f"🆔 ID: {registro[0]}")
+    c.drawString(margem_esquerda, margem_superior - 60, f"👤 Nome: {registro[1]}")
+    c.drawString(margem_esquerda, margem_superior - 80, f"📧 Email: {registro[2]}")
+
+    # Configurar título da descrição
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(margem_esquerda, margem_superior - 110, "📝 Descrição:")
 
     # Ajuste para a descrição multi-linha
-    descricao = f"📝 Descrição:\n{registro[3]}"
-    text = c.beginText(50, height - 180)
-    text.setFont("Helvetica", 12)
-    text.textLines(descricao)
+    descricao = registro[3]
+    c.setFont("Helvetica", 12)
 
-    c.drawText(text)
+    # Envolver texto para respeitar a largura da página
+    wrapped_text = textwrap.wrap(descricao, width=100)  # Ajusta o tamanho da linha
+
+    y_position = margem_superior - 130
+    for line in wrapped_text:
+        c.drawString(margem_esquerda, y_position, line)
+        y_position -= 15  # Move para a próxima linha
+
     c.showPage()
     c.save()
 
@@ -159,37 +157,13 @@ def visualizar_documento():
 
     registro = next((r for r in registros if r[0] == selected_id), None)
     if registro:
-        st.markdown(
-            f"""
-            <div style="
-                border: 2px solid #ddd; 
-                border-radius: 10px; 
-                padding: 20px; 
-                background-color: #ffffff;
-                box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
-                color: #333;
-            ">
-                <h2 style="text-align: center; color: #333;">📌 Documento Oficial</h2>
-                <hr>
-                <p><strong>🆔 ID:</strong> {registro[0]}</p>
-                <p><strong>👤 Nome:</strong> {registro[1]}</p>
-                <p><strong>📧 Email:</strong> {registro[2]}</p>
-                <p><strong>📝 Descrição:</strong></p>
-                <div style="
-                    border-left: 5px solid #DAA520; 
-                    padding: 10px;
-                    background-color: #f0f4ff;
-                    font-style: normal;
-                    color: #333;
-                ">
-                    {registro[3]}
-                </div>
-                <hr>
-                <p style="text-align: right; font-size: 12px; color: #666;">📅 Data de emissão: {st.session_state.get('data_atual', 'N/A')}</p>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        st.markdown(f"""
+            <h2 style="text-align: center;">📌 Documento Oficial</h2>
+            <p><strong>🆔 ID:</strong> {registro[0]}</p>
+            <p><strong>👤 Nome:</strong> {registro[1]}</p>
+            <p><strong>📧 Email:</strong> {registro[2]}</p>
+            <p><strong>📝 Descrição:</strong> {registro[3]}</p>
+        """, unsafe_allow_html=True)
 
         # Gerar e exibir botão para download do PDF
         pdf_download_link = gerar_pdf(registro)
@@ -197,7 +171,7 @@ def visualizar_documento():
     else:
         st.error("Registro não encontrado.")
 
-# Layout do Menu Lateral
+# Adicionar autenticação
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 
@@ -225,15 +199,12 @@ else:
         descricao = st.text_area("Descrição")
 
         if st.button("Salvar"):
-            if nome and email and descricao:
-                conn = get_db_connection()
-                conn.execute("INSERT INTO registros (nome, email, descricao) VALUES (?, ?, ?)", (nome, email, descricao))
-                conn.commit()
-                conn.close()
-                st.success("✅ Registro salvo com sucesso!")
-                st.rerun()
-            else:
-                st.error("❌ Todos os campos são obrigatórios.")
+            conn = get_db_connection()
+            conn.execute("INSERT INTO registros (nome, email, descricao) VALUES (?, ?, ?)", (nome, email, descricao))
+            conn.commit()
+            conn.close()
+            st.success("✅ Registro salvo com sucesso!")
+            st.rerun()
     elif menu == "Visualização":
         visualizar_documento()
     elif menu == "Logout":
