@@ -65,16 +65,20 @@ def exportar_xlsx():
     href = f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="{xlsx_file}">📥 Baixar Excel</a>'
     st.markdown(href, unsafe_allow_html=True)
 
-# Página de Consulta de Registros com Exportação
+# Página de Consulta de Registros
 def consulta_registros():
     st.title("📋 Consulta de Registros")
+    
     conn = get_db_connection()
     registros = conn.execute("SELECT * FROM registros").fetchall()
     conn.close()
 
     if registros:
+        # Criar DataFrame
         df = pd.DataFrame(registros, columns=["ID", "Nome", "Email", "Descrição"])
-        st.table(df)
+
+        # Exibir tabela com ajuste de largura
+        st.dataframe(df, use_container_width=True)
 
         if st.button("📤 Exportar para CSV"):
             exportar_csv()
@@ -97,6 +101,7 @@ def consulta_registros():
     else:
         st.info("Nenhum registro encontrado.")
 
+# Função para gerar PDF com quebra de texto
 def gerar_pdf(registro):
     pdf_file = f"documento_{registro[0]}.pdf"
     
@@ -140,6 +145,59 @@ def gerar_pdf(registro):
     href = f'<a href="data:application/pdf;base64,{b64}" download="{pdf_file}">📥 Baixar PDF</a>'
     return href
 
+# Página de Cadastro de Novo Registro
+def cadastro_formulario():
+    st.title("📝 Cadastro de Novo Registro")
+
+    nome = st.text_input("Nome Completo")
+    email = st.text_input("Email")
+    descricao = st.text_area("Descrição")
+
+    if st.button("Salvar"):
+        if nome and email and descricao:
+            conn = get_db_connection()
+            conn.execute("INSERT INTO registros (nome, email, descricao) VALUES (?, ?, ?)", (nome, email, descricao))
+            conn.commit()
+            conn.close()
+
+            # 🎉 Mensagem de sucesso e notificação
+            st.success("✅ Registro salvo com sucesso!")
+            st.toast("📌 Novo registro adicionado!", icon="✅")
+            st.balloons()
+
+            st.rerun()
+        else:
+            st.error("❌ Todos os campos são obrigatórios.")
+
+# # Página de Visualização de Documento
+# def visualizar_documento():
+#     st.title("📄 Visualização de Documento")
+
+#     conn = get_db_connection()
+#     registros = conn.execute("SELECT * FROM registros").fetchall()
+#     conn.close()
+
+#     if not registros:
+#         st.info("Nenhum registro disponível para visualização.")
+#         return
+
+#     ids = [r[0] for r in registros]
+#     selected_id = st.selectbox("Selecione um registro", ids)
+
+#     registro = next((r for r in registros if r[0] == selected_id), None)
+#     if registro:
+#         st.write(f"**🆔 ID:** {registro[0]}")
+#         st.write(f"**👤 Nome:** {registro[1]}")
+#         st.write(f"**📧 Email:** {registro[2]}")
+#         st.write(f"**📝 Descrição:** {registro[3]}")
+
+#         # Gerar e exibir botão para download do PDF
+#         pdf_download_link = gerar_pdf(registro)
+#         st.markdown(pdf_download_link, unsafe_allow_html=True)
+#     else:
+#         st.error("Registro não encontrado.")
+
+
 # Página de Visualização de Documento com Exportação para PDF
 def visualizar_documento():
     st.title("📄 Visualização de Documento")
@@ -157,13 +215,37 @@ def visualizar_documento():
 
     registro = next((r for r in registros if r[0] == selected_id), None)
     if registro:
-        st.markdown(f"""
-            <h2 style="text-align: center;">📌 Documento Oficial</h2>
-            <p><strong>🆔 ID:</strong> {registro[0]}</p>
-            <p><strong>👤 Nome:</strong> {registro[1]}</p>
-            <p><strong>📧 Email:</strong> {registro[2]}</p>
-            <p><strong>📝 Descrição:</strong> {registro[3]}</p>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            f"""
+            <div style="
+                border: 2px solid #ddd; 
+                border-radius: 10px; 
+                padding: 20px; 
+                background-color: #ffffff;
+                box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+                color: #333;
+            ">
+                <h2 style="text-align: center; color: #333;">📌 Documento Oficial</h2>
+                <hr>
+                <p><strong>🆔 ID:</strong> {registro[0]}</p>
+                <p><strong>👤 Nome:</strong> {registro[1]}</p>
+                <p><strong>📧 Email:</strong> {registro[2]}</p>
+                <p><strong>📝 Descrição:</strong></p>
+                <div style="
+                    border-left: 5px solid #DAA520; 
+                    padding: 10px;
+                    background-color: #f0f4ff;
+                    font-style: normal;
+                    color: #333;
+                ">
+                    {registro[3]}
+                </div>
+                <hr>
+                <p style="text-align: right; font-size: 12px; color: #666;">📅 Data de emissão: {st.session_state.get('data_atual', 'N/A')}</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
         # Gerar e exibir botão para download do PDF
         pdf_download_link = gerar_pdf(registro)
@@ -171,17 +253,19 @@ def visualizar_documento():
     else:
         st.error("Registro não encontrado.")
 
-# Adicionar autenticação
+        
+
+# Tela de Login e Logout
 if "authenticated" not in st.session_state:
     st.session_state["authenticated"] = False
 
 if not st.session_state["authenticated"]:
     st.title("🔐 Login")
-    user = st.text_input("Usuário", key="user")
-    password = st.text_input("Senha", type="password", key="password")
+    user = st.text_input("Usuário")
+    password = st.text_input("Senha", type="password")
 
     if st.button("Entrar"):
-        if user == "" and password == "":
+        if user == "admin" and password == "1234":
             st.session_state["authenticated"] = True
             st.success("✅ Login realizado com sucesso!")
             st.rerun()
@@ -189,22 +273,10 @@ if not st.session_state["authenticated"]:
             st.error("❌ Usuário ou senha incorretos.")
 else:
     menu = st.sidebar.radio("📌 Menu", ["Consulta", "Cadastro", "Visualização", "Logout"])
-
     if menu == "Consulta":
         consulta_registros()
     elif menu == "Cadastro":
-        st.title("📝 Cadastro de Novo Registro")
-        nome = st.text_input("Nome Completo")
-        email = st.text_input("Email")
-        descricao = st.text_area("Descrição")
-
-        if st.button("Salvar"):
-            conn = get_db_connection()
-            conn.execute("INSERT INTO registros (nome, email, descricao) VALUES (?, ?, ?)", (nome, email, descricao))
-            conn.commit()
-            conn.close()
-            st.success("✅ Registro salvo com sucesso!")
-            st.rerun()
+        cadastro_formulario()
     elif menu == "Visualização":
         visualizar_documento()
     elif menu == "Logout":
