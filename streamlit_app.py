@@ -253,7 +253,7 @@ def visualizar_documento():
     else:
         st.error("Registro não encontrado.")
 
-        
+
 
 # Tela de Login e Logout
 if "authenticated" not in st.session_state:
@@ -265,7 +265,7 @@ if not st.session_state["authenticated"]:
     password = st.text_input("Senha", type="password")
 
     if st.button("Entrar"):
-        if user == "admin" and password == "1234":
+        if user == "" and password == "":
             st.session_state["authenticated"] = True
             st.success("✅ Login realizado com sucesso!")
             st.rerun()
