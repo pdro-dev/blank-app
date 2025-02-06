@@ -17,6 +17,27 @@ def get_db_connection():
     )
     return conn
 
+# Função para detectar o modo do usuário via JavaScript
+def detect_theme():
+    st.markdown(
+        """
+        <script>
+        function sendThemeToStreamlit() {
+            var theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            window.parent.postMessage({theme: theme}, '*');
+        }
+        sendThemeToStreamlit();
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', sendThemeToStreamlit);
+        </script>
+        <div id="theme-detect"></div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Captura a mensagem do tema e armazena no session_state
+    theme = st.session_state.get("theme", "light")  # Padrão: Light Mode
+    return theme
+
 # Página de Login Simples
 def login_page():
     st.title("🔐 Login")
@@ -72,9 +93,13 @@ def cadastro_formulario():
         else:
             st.error("❌ Todos os campos são obrigatórios.")
 
-# Página de Visualização de Documento com Correção de Cores
+
+# Página de Visualização de Documento
 def visualizar_documento():
     st.title("📄 Visualização de Documento")
+
+    # Detecta o tema do usuário
+    theme = detect_theme()
 
     conn = get_db_connection()
     registros = conn.execute("SELECT * FROM registros").fetchall()
@@ -89,24 +114,55 @@ def visualizar_documento():
 
     registro = next((r for r in registros if r[0] == selected_id), None)
     if registro:
-        # Criando um layout visualmente estruturado e corrigindo a cor do texto
-        st.markdown(
-            f"""
+        if theme == "dark":
+            # 🎨 Modo Escuro (Dark Mode)
+            markdown_content = f"""
+            <div style="
+                border: 2px solid rgba(255, 255, 255, 0.2); 
+                border-radius: 10px; 
+                padding: 20px; 
+                background-color: rgba(50, 50, 50, 0.8);
+                box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+                color: #E0E0E0;
+            ">
+                <h2 style="text-align: center; color: #F9F9F9;">📌 Documento Oficial</h2>
+                <hr style="border-top: 1px solid rgba(255, 255, 255, 0.3);">
+                <p><strong style="color: #FF8C00;">🆔 ID:</strong> {registro[0]}</p>
+                <p><strong style="color: #87CEFA;">👤 Nome:</strong> {registro[1]}</p>
+                <p><strong style="color: #98FB98;">📧 Email:</strong> {registro[2]}</p>
+                <p><strong style="color: #FFD700;">📝 Descrição:</strong></p>
+                <div style="
+                    border-left: 5px solid #FFD700; 
+                    padding: 10px;
+                    background-color: rgba(80, 80, 80, 0.8);
+                    font-style: normal;
+                    color: #FFFFFF;
+                ">
+                    {registro[3]}
+                </div>
+                <hr style="border-top: 1px solid rgba(255, 255, 255, 0.3);">
+                <p style="text-align: right; font-size: 12px; color: #AAAAAA;">📅 Data de emissão: {st.session_state.get('data_atual', 'N/A')}</p>
+            </div>
+            """
+        else:
+            # 🌞 Modo Claro (Light Mode)
+            markdown_content = f"""
             <div style="
                 border: 2px solid #ddd; 
                 border-radius: 10px; 
                 padding: 20px; 
                 background-color: #ffffff;
                 box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+                color: #333;
             ">
                 <h2 style="text-align: center; color: #333;">📌 Documento Oficial</h2>
                 <hr>
-                <p><span style="background-color: #4A90E2; color: #fff; padding: 5px 10px; border-radius: 5px;">🆔 ID:</span> {registro[0]}</p>
-                <p><span style="background-color: #4A90E2; color: #fff; padding: 5px 10px; border-radius: 5px;">👤 Nome:</span> {registro[1]}</p>
-                <p><span style="background-color: #4A90E2; color: #fff; padding: 5px 10px; border-radius: 5px;">📧 Email:</span> {registro[2]}</p>
-                <p><span style="background-color: #4A90E2; color: #fff; padding: 5px 10px; border-radius: 5px;">📝 Descrição:</span></p>
+                <p><strong style="color: #FF4500;">🆔 ID:</strong> {registro[0]}</p>
+                <p><strong style="color: #1E90FF;">👤 Nome:</strong> {registro[1]}</p>
+                <p><strong style="color: #008000;">📧 Email:</strong> {registro[2]}</p>
+                <p><strong style="color: #DAA520;">📝 Descrição:</strong></p>
                 <div style="
-                    border-left: 5px solid #007BFF; 
+                    border-left: 5px solid #DAA520; 
                     padding: 10px;
                     background-color: #f0f4ff;
                     font-style: normal;
@@ -115,13 +171,15 @@ def visualizar_documento():
                     {registro[3]}
                 </div>
                 <hr>
-                <p style="text-align: right; font-size: 12px; color: #888;">📅 Data de emissão: {st.session_state.get('data_atual', 'N/A')}</p>
+                <p style="text-align: right; font-size: 12px; color: #666;">📅 Data de emissão: {st.session_state.get('data_atual', 'N/A')}</p>
             </div>
-            """,
-            unsafe_allow_html=True
-        )
+            """
+
+        # Renderiza o documento formatado conforme o tema
+        st.markdown(markdown_content, unsafe_allow_html=True)
     else:
         st.error("Registro não encontrado.")
+
 
 
 
