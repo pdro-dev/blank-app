@@ -203,7 +203,7 @@ if not st.session_state["authenticated"]:
     password = st.text_input("Senha", type="password", key="password")
 
     if st.button("Entrar"):
-        if user == "admin" and password == "1234":
+        if user == "" and password == "":
             st.session_state["authenticated"] = True
             st.success("✅ Login realizado com sucesso!")
             st.rerun()
